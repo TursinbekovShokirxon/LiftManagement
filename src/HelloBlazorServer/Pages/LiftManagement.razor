@@ -1,0 +1,150 @@
+@page "/LiftManagement"
+@using System.Collections.Generic
+@using global::LiftManagement.HelloBlazorServer.Models.Lift
+@using Samples.HelloBlazorServer.Services
+@inherits MixedStateComponent<(ElevatorQueue[], Elevator), DateTime>
+@inject NavigationManager Navigation
+@inject LiftManagementService LiftManager
+
+@{
+    var state = State.ValueOrDefault;
+    var queueState = state.Item1 ?? Array.Empty<ElevatorQueue>();
+    var elevatorState = state.Item2 ?? new Elevator();
+    var error = State.Error;
+}
+
+<h3>Управление лифтом</h3>
+
+<div>
+    <!-- Поле ввода текущего этажа -->
+    <label for="stageCurrentInput">Введите текущий этаж:</label>
+    <input id="stageCurrentInput" @bind="stageCurrentInput" @bind:event="oninput" type="number" class="border rounded p-1" />
+    <span class="text-red-500" style="margin-left:10px;">@stageCurrentError</span>
+
+    <!-- Кнопки управления -->
+    <button class="btn-primary" @onclick="CallElevator" disabled="@HasValidationError">Созвать</button>
+    <button class="btn btn-primary" @onclick="ShowQueue">Показать очередь</button>
+    <button class="btn btn-primary" @onclick="ShowStatus">Показать статус</button>
+</div>
+
+<!-- Скрытое окно статуса -->
+@if (IsStatusVisible)
+{
+    <div class="status-box">
+        <h4>Id лифта : @state.Item2.Id</h4>
+        <h4>Статус лифта : @state.Item2.Status</h4>
+        <h4>Текущий этаж: @state.Item2.CurrentFloor</h4>
+        <button class="btn btn-danger" @onclick="HideStatus">Закрыть</button>
+    </div>
+}
+
+<!-- Скрытое модальное окно очереди  -->
+@if (IsQueueVisible)
+{
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-5 rounded shadow-lg w-1/3">
+            <h4 class="text-lg font-bold">Очередь на этаж @targetStage</h4>
+            <ul>
+                @if (state.Item1.Count() == 0)
+                {
+                    <li class="text-gray-500">Очередь пуста.</li>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Этаж заказа</th>
+                                <th>Время запроса</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var forecast in state.Item1)
+                            {
+                                <tr>
+                                    <td>@forecast.Id</td>
+                                    <td>@forecast.CurrentFloor</td>
+                                    <td>@forecast.RequestedAt</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </ul>
+            <button class="btn btn-danger" @onclick="HideQueue">Закрыть</button>
+        </div>
+    </div>
+}
+
+
+@code {
+    private int stageCurrentInput { get; set; } = 1;  // Текущий этаж
+    private int targetStage { get; set; } = 1;        // Целевой этаж
+    private bool IsQueueVisible { get; set; } = false;
+    private bool IsCongrulation { get; set; } = false;
+    private bool IsStatusVisible { get; set; } = false;
+    private List<string> QueueItems { get; set; } = new List<string>();
+    private string StatusMessage { get; set; } = "Лифт в движении";
+
+    // Ошибки ввода
+    private string stageCurrentError { get; set; } = "";
+    private string targetStageError { get; set; } = "";
+
+    // Флаг для блокировки кнопок при ошибке
+    private bool HasValidationError => !string.IsNullOrEmpty(stageCurrentError) || !string.IsNullOrEmpty(targetStageError);
+
+    // Метод для проверки ввода
+    private void ValidateInput()
+    {
+        stageCurrentError = (stageCurrentInput < 1 || stageCurrentInput > 10)
+            ? "Этаж должен быть от 1 до 10"
+            : "";
+
+        targetStageError = (targetStage < 1 || targetStage > 10)
+            ? "Этаж должен быть от 1 до 10"
+            : "";
+    }
+
+
+    private void ShowQueue()
+    {
+        ValidateInput();
+        if (!HasValidationError)
+        {
+            IsQueueVisible = true;
+        }
+    }
+
+    private void HideQueue()
+    {
+        IsQueueVisible = false;
+    }
+
+    private void ShowStatus()
+    {
+        IsStatusVisible = true;
+    }
+
+    private void HideStatus()
+    {
+        IsStatusVisible = false;
+    }
+
+    protected override async Task<(ElevatorQueue[], Elevator)> ComputeState(CancellationToken cancellationToken)
+    {
+        var queue = await LiftManager.GetQueue(cancellationToken);
+        var elevator = await LiftManager.GetStatus(cancellationToken);
+        await LiftManager.ElevatorMovement(cancellationToken);
+        return (queue, elevator);
+    }
+
+    private async Task CallElevator()
+    {
+        ValidateInput();
+        if (!HasValidationError)
+        {
+            await LiftManager.CallElevator(stageCurrentInput, targetStage);
+        }
+    }
+}

@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: lift_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: Lift
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adminadmin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  blazor_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lift_blazor
+    restart: always
+    environment:
+      ConnectionStrings__Shokir: "Host=postgres;Database=Lift;Port=5432;User Id=postgres;Password=adminadmin"
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
