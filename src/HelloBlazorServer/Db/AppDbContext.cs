@@ -13,10 +13,6 @@ namespace LiftManagement.HelloBlazorServer.Db
         public DbSet<Elevator> Elevator { get; set; }
         public DbSet<ElevatorQueue> Queues { get; set; }
 
-
-        // ActualLab.Fusion.EntityFramework.Operations tables
-        public DbSet<DbOperation> Operations { get; protected set; } = null!;
-
           protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

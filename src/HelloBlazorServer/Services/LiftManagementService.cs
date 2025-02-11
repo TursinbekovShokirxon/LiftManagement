@@ -18,7 +18,7 @@ namespace Samples.HelloBlazorServer.Services
         {
             using (var scope = _scopeFactory.CreateScope()) {
                 var _db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var queues = _db.Queues.Select(x => x).ToArray();
+                var queues = await _db.Queues.Select(x => x).ToArrayAsync();
 
                 return queues;
             }
@@ -81,7 +81,7 @@ namespace Samples.HelloBlazorServer.Services
                     return 0;
 
                 int elevatorCurrentStage = elevator.CurrentFloor;
-                ElevatorQueue currentRequest = null;
+                ElevatorQueue? currentRequest = null;
 
                 foreach (var request in queues) {
                     if (elevatorCurrentStage == request.CurrentFloor) {

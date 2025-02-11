@@ -1,8 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <AssemblyName>Samples.HelloBlazorServer</AssemblyName>
     <RootNamespace>Samples.HelloBlazorServer</RootNamespace>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+	  <OutputType>WinExe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TargetFramework>net9.0</TargetFramework>
+	
+	  <!-- Указываем точку входа -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +20,7 @@
 
   <!-- Roslyn generators/analyzers -->
   <ItemGroup>
-    <PackageReference Include="ActualLab.Generators" PrivateAssets="all" />
+	  <PackageReference Include="ActualLab.Generators" PrivateAssets="all" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

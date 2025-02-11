@@ -1,25 +1,22 @@
 services:
   postgres:
-    image: postgres:15
-    container_name: lift_postgres
-    restart: always
+    image: "postgres:latest"
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: Lift
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: adminadmin
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=1000"]
 
-  blazor_server:
+
+  helloblazorserver:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: lift_blazor
-    restart: always
-    environment:
-      ConnectionStrings__Shokir: "Host=postgres;Database=Lift;Port=5432;User Id=postgres;Password=adminadmin"
+    restart: unless-stopped
     ports:
       - "8080:80"
     depends_on:
@@ -27,3 +24,4 @@ services:
 
 volumes:
   postgres_data:
+ 

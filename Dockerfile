@@ -1,18 +1,35 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+# 1️⃣ Базовый образ ASP.NET
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# 2️⃣ Билд-образ с SDK
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["src/HelloBlazorServer/HelloBlazorServer.csproj", "HelloBlazorServer/"]
+# Копируем .csproj и зависимости
+COPY src/HelloBlazorServer/HelloBlazorServer.csproj HelloBlazorServer/
+COPY Directory.Packages.props ./ 
+
+# Восстанавливаем зависимости
 RUN dotnet restore "HelloBlazorServer/HelloBlazorServer.csproj"
 
-COPY src/HelloBlazorServer/ HelloBlazorServer/
-WORKDIR /src/HelloBlazorServer
-RUN dotnet publish -c Release -o /app/publish
+# Копируем весь код
+COPY . .
 
+# 3️⃣ Сборка проекта
+WORKDIR "/src/HelloBlazorServer"
+RUN dotnet build "HelloBlazorServer.csproj" -c Release -o /app/build
+
+# 4️⃣ Публикация для linux-x64, без UseAppHost для минимизации
+FROM build AS publish
+WORKDIR "/src/HelloBlazorServer"
+RUN dotnet publish "HelloBlazorServer.csproj" -c Release -o /app/publish -r linux-x64 --no-build /p:UseAppHost=false
+
+# 5️⃣ Финальный образ
 FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "HelloBlazorServer.dll"]
+COPY --from=publish /app/publish .
+
+# 6️⃣ Запуск приложения
+CMD ["dotnet", "HelloBlazorServer.dll"]
