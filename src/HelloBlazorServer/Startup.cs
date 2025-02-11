@@ -14,7 +14,7 @@ namespace Samples.HelloBlazorServer;
 
 public class Startup
 {
-    public void ConfigureServices(IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services,IConfiguration cfg)
     {
 #pragma warning disable ASP0000
         var tmpServices = services.BuildServiceProvider();
@@ -33,7 +33,7 @@ public class Startup
         services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.1));
 
         //DbContext 
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql("Host=postgres;Database=lift2;Port=5432;User Id=postgres;password=adminadmin"));
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(cfg.GetConnectionString("Shokir")));
         // ASP.NET Core / Blazor services
         services.AddRazorPages();
         services.AddServerSideBlazor(o => o.DetailedErrors = true);
